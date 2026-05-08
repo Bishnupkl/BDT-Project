@@ -2,7 +2,7 @@
 
 This repository contains the Big Data final project scaffold for a real-time cryptocurrency analytics pipeline.
 
-## Student 1 Scope
+## Bishnu Scope
 
 Implemented in this version:
 
@@ -10,7 +10,7 @@ Implemented in this version:
 - Automatic creation of the `crypto-topic` Kafka topic
 - Java Kafka producer that emits simulated cryptocurrency JSON events
 - Producer Dockerfile
-- Student 1 integration-test script
+- Bishnu integration-test script
 
 ## Run Kafka
 
@@ -36,7 +36,7 @@ docker compose -f docker/docker-compose.yml --profile producer up --build crypto
 ## Integration Test
 
 ```bash
-bash scripts/integration-test-student1.sh
+bash scripts/integration-test-bishnu.sh
 ```
 
 Expected Kafka message format:
