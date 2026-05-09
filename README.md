@@ -2,14 +2,38 @@
 
 This project implements a real-time Big Data analytics pipeline using Apache Kafka, Apache Spark, and Docker. It fetches **live cryptocurrency price data** from the CoinGecko API, processes the stream in real-time, and prepares it for further analysis and visualization.
 
-This repository contains the core infrastructure, including the live API data producer and the services required to run the streaming pipeline.
+## Current Repository Scope
+
+This repository currently handles the data ingestion and infrastructure phase of the project (Student 1 Responsibilities):
+
+- Docker infrastructure (Zookeeper, Kafka, Spark Master, Spark Worker)
+- Kafka setup and network configuration
+- Java Kafka Producer (fetches live market data)
+- Integration and networking setup
+
+Spark Structured Streaming analytics and dashboard implementation are handled separately as part of Student 2 responsibilities.
+
+## Architecture
+
+```text
+CoinGecko API
+      ↓
+Java Kafka Producer
+      ↓
+Apache Kafka (crypto-topic)
+      ↓
+Spark Structured Streaming
+      ↓
+Parquet Storage
+      ↓
+Dashboard Visualization
+```
+
+The producer continuously fetches live cryptocurrency market prices from the CoinGecko API and publishes them into Kafka in real-time. This provides the high-volume streaming data source required for the pipeline.
 
 ## Getting Started
 
-Follow these instructions to get the project running on your local machine.
-
 ### Prerequisites
-
 - Docker
 - Docker Compose
 
@@ -22,8 +46,7 @@ Follow these instructions to get the project running on your local machine.
     ```
 
 2.  **Configure Environment Variables:**
-    This project uses an `.env` file for configuration. A sample file is provided to get you started. Simply copy it and make any desired adjustments.
-
+    Copy the provided sample `.env` file to customize settings.
     ```bash
     cp .env.example .env
     ```
@@ -32,8 +55,7 @@ Follow these instructions to get the project running on your local machine.
 
 For detailed, step-by-step instructions on how to run, test, and troubleshoot the pipeline, please refer to the **[How to Run Guide](./run.md)**.
 
-For a quick start, use the following command to launch the entire cluster (Kafka, Spark, etc.):
-
+For a quick start, use the following command to launch the entire cluster:
 ```bash
 bash scripts/start-cluster.sh
 ```
@@ -43,31 +65,37 @@ To begin streaming live API data, run the producer:
 bash scripts/run-producer.sh
 ```
 
-## Architecture Update: Live API Integration
+## Kafka Connectivity
 
-The project has been updated to use the real-time **CoinGecko API** instead of simulated random data. 
-
-**Data Flow:**
-`CoinGecko API` → `Java Kafka Producer` → `Apache Kafka` → `Spark Structured Streaming` → `Storage/Dashboard`
-
-This ensures the pipeline ingests high-volume, real-time data, fulfilling the core requirements of a Big Data streaming application.
+- **Inside Docker containers:** Use `kafka:29092`. (Docker containers communicate internally using the Docker network hostname).
+- **Outside Docker (Host machine):** Use `localhost:9092`.
 
 ## Service URLs
 
-Once the cluster is running, you can access the following services:
+Once the cluster is running, access these tools in your browser:
 
 | Service      | URL                  |
 |--------------|----------------------|
 | Spark UI     | http://localhost:8080|
 | Kafka UI     | http://localhost:8085|
-| Kafka Broker | `localhost:9092`     |
 
 ## Scripts Overview
 
 The `scripts/` directory contains helpers for managing the project:
 
-- `start-cluster.sh`: Starts all Docker services (Kafka, Spark, etc.).
+- `start-cluster.sh`: Starts all Docker services.
 - `stop-cluster.sh`: Stops and removes all Docker services.
-- `run-producer.sh`: Builds and runs the Kafka producer in a Docker container.
-- `check-spark-kafka.sh`: Verifies network connectivity between Spark and Kafka containers.
-- `integration-test-bishnu.sh`: Runs an automated end-to-end test for the producer-to-Kafka pipeline.
+- `run-producer.sh`: Builds and runs the Kafka producer.
+- `check-spark-kafka.sh`: Verifies network connectivity between Spark and Kafka.
+- `integration-test-bishnu.sh`: Runs an automated end-to-end test.
+
+## Future Improvements
+
+Potential future enhancements for the pipeline:
+- Add Binance WebSocket integration
+- Add Spark Structured Streaming analytics
+- Store processed data in Parquet/Hive
+- Build Grafana or Streamlit dashboard
+- Add anomaly detection alerts
+- Add historical replay support
+- Deploy using Kubernetes
