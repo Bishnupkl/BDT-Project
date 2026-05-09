@@ -1,82 +1,64 @@
 # Real-Time Cryptocurrency Analytics Pipeline
 
-This repository contains the Big Data final project scaffold for a real-time cryptocurrency analytics pipeline.
+This project implements a real-time Big Data analytics pipeline using Apache Kafka, Apache Spark, and Docker. It simulates a stream of cryptocurrency price data, processes it, and prepares it for further analysis and visualization.
 
-## Bishnu Scope
+This repository contains the core infrastructure, including the data producer and the services required to run the streaming pipeline.
 
-Implemented in this version:
+## Getting Started
 
-- Docker Compose services for Zookeeper and Kafka
-- Docker Compose services for Spark master and Spark worker
-- Kafka UI for topic/message inspection
-- Shared Docker network for Kafka/Spark communication
-- Kafka volume for persisted broker data
-- `.env` configuration for producer and topic settings
-- Automatic creation of the `crypto-topic` Kafka topic
-- Java Kafka producer that emits simulated cryptocurrency JSON events
-- Producer Dockerfile
-- Bishnu integration-test script
-- Helper scripts for starting/stopping the cluster and running connectivity checks
+Follow these instructions to get the project running on your local machine.
 
-This scope provides the Spark infrastructure and verifies Kafka/Spark networking. The Spark streaming consumer job is still the next project layer for Student 2 to plug into `kafka:29092`.
+### Prerequisites
 
-## Service URLs
+- Docker
+- Docker Compose
 
-| Service | URL |
-| --- | --- |
-| Spark UI | http://localhost:8080 |
-| Kafka UI | http://localhost:8085 |
-| Kafka Broker | localhost:9092 |
+### Setup
 
-## Start The Full Cluster
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd BDT-FinalProject
+    ```
+
+2.  **Configure Environment Variables:**
+    This project uses an `.env` file for configuration. A sample file is provided to get you started. Simply copy it and make any desired adjustments.
+
+    ```bash
+    cp .env.example .env
+    ```
+
+### Running the Pipeline
+
+For detailed, step-by-step instructions on how to run, test, and troubleshoot the pipeline, please refer to the **[How to Run Guide](./run.md)**.
+
+For a quick start, use the following command to launch the entire cluster (Kafka, Spark, etc.):
 
 ```bash
 bash scripts/start-cluster.sh
 ```
 
-## Run The Producer Locally
-
-```bash
-cd producer
-mvn test
-mvn package
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092 PRODUCER_MAX_EVENTS=10 java -jar target/crypto-producer-1.0.0.jar
-```
-
-## Run The Producer In Docker
-
+To begin streaming data, run the producer:
 ```bash
 bash scripts/run-producer.sh
 ```
 
-To send a limited number of events:
+## Service URLs
 
-```bash
-PRODUCER_MAX_EVENTS=10 bash scripts/run-producer.sh
-```
+Once the cluster is running, you can access the following services:
 
-## Integration Test
+| Service      | URL                  |
+|--------------|----------------------|
+| Spark UI     | http://localhost:8080|
+| Kafka UI     | http://localhost:8085|
+| Kafka Broker | `localhost:9092`     |
 
-```bash
-bash scripts/integration-test-bishnu.sh
-```
+## Scripts Overview
 
-## Verify Spark Can Resolve Kafka
+The `scripts/` directory contains helpers for managing the project:
 
-```bash
-bash scripts/check-spark-kafka.sh
-```
-
-Expected output includes an IP address for `kafka`.
-
-## Stop The Cluster
-
-```bash
-bash scripts/stop-cluster.sh
-```
-
-Expected Kafka message format:
-
-```json
-{"symbol":"BTC","price":65231.45,"timestamp":"2026-05-07T12:00:00Z"}
-```
+- `start-cluster.sh`: Starts all Docker services (Kafka, Spark, etc.).
+- `stop-cluster.sh`: Stops and removes all Docker services.
+- `run-producer.sh`: Builds and runs the Kafka producer in a Docker container.
+- `check-spark-kafka.sh`: Verifies network connectivity between Spark and Kafka containers.
+- `integration-test-bishnu.sh`: Runs an automated end-to-end test for the producer-to-Kafka pipeline.
