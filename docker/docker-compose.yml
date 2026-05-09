@@ -7,6 +7,8 @@ services:
       ZOOKEEPER_TICK_TIME: 2000
     ports:
       - "2181:2181"
+    networks:
+      - crypto-network
 
   kafka:
     image: confluentinc/cp-kafka:7.6.1
@@ -25,11 +27,15 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
       interval: 10s
       timeout: 10s
       retries: 12
+    networks:
+      - crypto-network
 
   kafka-setup:
     image: confluentinc/cp-kafka:7.6.1
@@ -41,8 +47,43 @@ services:
       - /bin/bash
       - -c
       - |
-        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic crypto-topic --partitions 1 --replication-factor 1
-        kafka-topics --bootstrap-server kafka:29092 --describe --topic crypto-topic
+        kafka-topics --bootstrap-server kafka:29092 --create --if-not-exists --topic ${KAFKA_TOPIC:-crypto-topic} --partitions 1 --replication-factor 1
+        kafka-topics --bootstrap-server kafka:29092 --describe --topic ${KAFKA_TOPIC:-crypto-topic}
+    networks:
+      - crypto-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8085:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+    networks:
+      - crypto-network
+
+  spark-master:
+    image: spark:3.5.8
+    container_name: spark-master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.master.Master", "--host", "spark-master", "--port", "7077", "--webui-port", "8080"]
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - crypto-network
+
+  spark-worker:
+    image: spark:3.5.8
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    networks:
+      - crypto-network
 
   crypto-producer:
     build:
@@ -52,9 +93,18 @@ services:
       kafka-setup:
         condition: service_completed_successfully
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      KAFKA_TOPIC: crypto-topic
-      PRODUCER_INTERVAL_MS: 1000
-      PRODUCER_MAX_EVENTS: 0
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-crypto-topic}
+      PRODUCER_INTERVAL_MS: ${PRODUCER_INTERVAL_MS:-1000}
+      PRODUCER_MAX_EVENTS: ${PRODUCER_MAX_EVENTS:-0}
+    networks:
+      - crypto-network
     profiles:
       - producer
+
+networks:
+  crypto-network:
+    driver: bridge
+
+volumes:
+  kafka-data:
