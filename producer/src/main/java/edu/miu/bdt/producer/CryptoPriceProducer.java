@@ -7,18 +7,22 @@ import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
 import java.time.Clock;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CryptoPriceProducer {
     private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
     private static final String DEFAULT_TOPIC = "crypto-topic";
-    private static final long DEFAULT_INTERVAL_MS = 1000L;
+    private static final long DEFAULT_INTERVAL_MS = 10_000L;
     private static final long DEFAULT_MAX_EVENTS = 0L;
 
     private final KafkaProducer<String, String> producer;
-    private final CryptoPriceGenerator generator;
+    private final CryptoApiClient apiClient;
     private final ObjectMapper objectMapper;
     private final String topic;
     private final long intervalMs;
@@ -26,13 +30,13 @@ public class CryptoPriceProducer {
     private final AtomicBoolean running = new AtomicBoolean(true);
 
     public CryptoPriceProducer(KafkaProducer<String, String> producer,
-                               CryptoPriceGenerator generator,
+                               CryptoApiClient apiClient,
                                ObjectMapper objectMapper,
                                String topic,
                                long intervalMs,
                                long maxEvents) {
         this.producer = producer;
-        this.generator = generator;
+        this.apiClient = apiClient;
         this.objectMapper = objectMapper;
         this.topic = topic;
         this.intervalMs = intervalMs;
@@ -43,10 +47,16 @@ public class CryptoPriceProducer {
         ProducerSettings settings = ProducerSettings.fromEnvironment();
         ObjectMapper objectMapper = CryptoJsonMapper.create();
         KafkaProducer<String, String> producer = new KafkaProducer<>(producerProperties(settings.bootstrapServers()));
-        CryptoPriceGenerator generator = new CryptoPriceGenerator(Clock.systemUTC());
+        CryptoApiClient apiClient = new CryptoApiClient(
+                HttpClient.newHttpClient(),
+                objectMapper,
+                settings.cryptoApiUri(),
+                CryptoApiClient.DEFAULT_ASSETS,
+                Clock.systemUTC()
+        );
         CryptoPriceProducer app = new CryptoPriceProducer(
                 producer,
-                generator,
+                apiClient,
                 objectMapper,
                 settings.topic(),
                 settings.intervalMs(),
@@ -59,26 +69,51 @@ public class CryptoPriceProducer {
 
     public void run() {
         long sentEvents = 0L;
-        while (running.get() && (maxEvents <= 0 || sentEvents < maxEvents)) {
-            CryptoPriceEvent event = generator.nextEvent();
-            String payload = toJson(event);
-            ProducerRecord<String, String> record = new ProducerRecord<>(topic, event.symbol(), payload);
-            producer.send(record, (metadata, exception) -> {
-                if (exception != null) {
-                    System.err.printf("Failed to send crypto event for %s: %s%n", event.symbol(), exception.getMessage());
-                    return;
+        try {
+            while (running.get() && (maxEvents <= 0 || sentEvents < maxEvents)) {
+                List<CryptoPriceEvent> events = fetchEvents();
+                for (CryptoPriceEvent event : events) {
+                    if (!running.get() || (maxEvents > 0 && sentEvents >= maxEvents)) {
+                        break;
+                    }
+                    sendEvent(event);
+                    sentEvents++;
                 }
-                System.out.printf("Sent %s to %s-%d@%d%n", payload, metadata.topic(), metadata.partition(), metadata.offset());
-            });
-            producer.flush();
-            sentEvents++;
-            sleepBetweenEvents();
+                producer.flush();
+                sleepBetweenEvents();
+            }
+        } finally {
+            producer.close();
         }
-        producer.close();
     }
 
     public void stop() {
         running.set(false);
+    }
+
+    private List<CryptoPriceEvent> fetchEvents() {
+        try {
+            return apiClient.fetchLatestPrices();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            stop();
+            return List.of();
+        } catch (IOException e) {
+            System.err.printf("Failed to fetch crypto prices from API: %s%n", e.getMessage());
+            return List.of();
+        }
+    }
+
+    private void sendEvent(CryptoPriceEvent event) {
+        String payload = toJson(event);
+        ProducerRecord<String, String> record = new ProducerRecord<>(topic, event.symbol(), payload);
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                System.err.printf("Failed to send crypto event for %s: %s%n", event.symbol(), exception.getMessage());
+                return;
+            }
+            System.out.printf("Sent %s to %s-%d@%d%n", payload, metadata.topic(), metadata.partition(), metadata.offset());
+        });
     }
 
     private String toJson(CryptoPriceEvent event) {
@@ -111,13 +146,18 @@ public class CryptoPriceProducer {
         return properties;
     }
 
-    private record ProducerSettings(String bootstrapServers, String topic, long intervalMs, long maxEvents) {
+    private record ProducerSettings(String bootstrapServers,
+                                    String topic,
+                                    long intervalMs,
+                                    long maxEvents,
+                                    URI cryptoApiUri) {
         private static ProducerSettings fromEnvironment() {
             return new ProducerSettings(
                     env("KAFKA_BOOTSTRAP_SERVERS", DEFAULT_BOOTSTRAP_SERVERS),
                     env("KAFKA_TOPIC", DEFAULT_TOPIC),
                     longEnv("PRODUCER_INTERVAL_MS", DEFAULT_INTERVAL_MS),
-                    longEnv("PRODUCER_MAX_EVENTS", DEFAULT_MAX_EVENTS)
+                    longEnv("PRODUCER_MAX_EVENTS", DEFAULT_MAX_EVENTS),
+                    URI.create(env("COINGECKO_API_URL", CryptoApiClient.DEFAULT_API_URI.toString()))
             );
         }
 
