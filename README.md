@@ -1,8 +1,8 @@
 # Real-Time Cryptocurrency Analytics Pipeline
 
-This project implements a real-time Big Data analytics pipeline using Apache Kafka, Apache Spark, and Docker. It simulates a stream of cryptocurrency price data, processes it, and prepares it for further analysis and visualization.
+This project implements a real-time Big Data analytics pipeline using Apache Kafka, Apache Spark, and Docker. It fetches **live cryptocurrency price data** from the CoinGecko API, processes the stream in real-time, and prepares it for further analysis and visualization.
 
-This repository contains the core infrastructure, including the data producer and the services required to run the streaming pipeline.
+This repository contains the core infrastructure, including the live API data producer and the services required to run the streaming pipeline.
 
 ## Getting Started
 
@@ -38,10 +38,19 @@ For a quick start, use the following command to launch the entire cluster (Kafka
 bash scripts/start-cluster.sh
 ```
 
-To begin streaming data, run the producer:
+To begin streaming live API data, run the producer:
 ```bash
 bash scripts/run-producer.sh
 ```
+
+## Architecture Update: Live API Integration
+
+The project has been updated to use the real-time **CoinGecko API** instead of simulated random data. 
+
+**Data Flow:**
+`CoinGecko API` → `Java Kafka Producer` → `Apache Kafka` → `Spark Structured Streaming` → `Storage/Dashboard`
+
+This ensures the pipeline ingests high-volume, real-time data, fulfilling the core requirements of a Big Data streaming application.
 
 ## Service URLs
 

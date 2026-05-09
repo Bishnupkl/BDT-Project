@@ -46,31 +46,33 @@ Expected output looks like:
 ```
 That means Spark can resolve Kafka inside Docker.
 
-## 4. Run producer
-Send 10 messages:
+## 4. Run Live API Producer
+The producer now fetches **live cryptocurrency prices** from the CoinGecko API.
+
+Send 10 live market messages:
 ```bash
 PRODUCER_MAX_EVENTS=10 bash scripts/run-producer.sh
 ```
-Run producer continuously:
+Run live API producer continuously:
 ```bash
 bash scripts/run-producer.sh
 ```
 Stop continuous producer with:
 `Ctrl + C`
 
-## 5. Check messages in Kafka UI
+## 5. Check Live Messages in Kafka UI
 Open:
 http://localhost:8085
 
 Then go to:
 **local -> Topics -> crypto-topic -> Messages**
 
-You should see JSON messages like:
+You should see JSON messages with current market prices like:
 ```json
-{"symbol":"BTC","price":65231.45,"timestamp":"2026-05-08T21:10:27Z"}
+{"symbol":"BTC","price":64123.85,"timestamp":"2026-05-08T21:10:27Z"}
 ```
 
-## 6. Run integration test
+## 6. Run Integration Test
 ```bash
 bash scripts/integration-test-bishnu.sh
 ```
