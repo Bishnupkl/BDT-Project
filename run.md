@@ -2,7 +2,8 @@
 
 Run everything from the project root:
 ```bash
-cd /var/www/html/miu/BGT-523/BDT-FinalProject
+git clone <repository-url>
+cd BDT-FinalProject
 ```
 
 ## Demo Workflow
