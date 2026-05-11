@@ -1,0 +1,11 @@
+symbol,coin_name,category
+BTC,Bitcoin,Store of Value
+ETH,Ethereum,Smart Contracts
+SOL,Solana,Smart Contracts
+ADA,Cardano,Smart Contracts
+DOGE,Dogecoin,Meme Coin
+BNB,BNB,Exchange Token
+XRP,XRP,Payments
+DOT,Polkadot,Interoperability
+AVAX,Avalanche,Smart Contracts
+MATIC,Polygon,Scaling
