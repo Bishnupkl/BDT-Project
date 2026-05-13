@@ -82,6 +82,9 @@ services:
     depends_on:
       - spark-master
     command: ["/opt/spark/bin/spark-class", "org.apache.spark.deploy.worker.Worker", "spark://spark-master:7077"]
+    volumes:
+      - ../data:/opt/spark-app/storage
+      - ../spark-app/metadata:/opt/spark-app/metadata:ro
     networks:
       - crypto-network
 
@@ -101,6 +104,32 @@ services:
       - crypto-network
     profiles:
       - producer
+
+  spark-app:
+    build:
+      context: ../spark-app
+    container_name: crypto-spark-app
+    depends_on:
+      kafka-setup:
+        condition: service_completed_successfully
+      spark-master:
+        condition: service_started
+      spark-worker:
+        condition: service_started
+    environment:
+      SPARK_MASTER_URL: ${SPARK_MASTER_URL:-spark://spark-master:7077}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
+      KAFKA_TOPIC: ${KAFKA_TOPIC:-crypto-topic}
+      CRYPTO_METADATA_PATH: ${CRYPTO_METADATA_PATH:-/opt/spark-app/metadata/crypto_metadata.csv}
+      SPARK_PARQUET_OUTPUT_PATH: ${SPARK_PARQUET_OUTPUT_PATH:-/opt/spark-app/storage/crypto_analytics.db}
+      SPARK_CHECKPOINT_PATH: ${SPARK_CHECKPOINT_PATH:-/opt/spark-app/storage/checkpoints}
+      SPARK_WAREHOUSE_DIR: ${SPARK_WAREHOUSE_DIR:-/opt/spark-app/storage}
+    volumes:
+      - ../data:/opt/spark-app/storage
+    networks:
+      - crypto-network
+    profiles:
+      - spark-app
 
 networks:
   crypto-network:

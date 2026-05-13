@@ -23,7 +23,6 @@ public class CryptoApiClient {
             new CryptoAsset("cardano", "ADA"),
             new CryptoAsset("ripple", "XRP")
     );
-
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
     private final URI apiUri;
@@ -49,12 +48,10 @@ public class CryptoApiClient {
                 .header("User-Agent", "miu-bdt-crypto-producer/1.0")
                 .GET()
                 .build();
-
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new IOException("CoinGecko API returned HTTP " + response.statusCode() + ": " + response.body());
         }
-
         CryptoApiResponse apiResponse = objectMapper.readValue(response.body(), CryptoApiResponse.class);
         List<CryptoPriceEvent> events = apiResponse.toEvents(assets, clock.instant());
         if (events.isEmpty()) {
@@ -74,7 +71,6 @@ public class CryptoApiClient {
     private static String encode(String value) {
         return URLEncoder.encode(value, StandardCharsets.UTF_8);
     }
-
     public record CryptoAsset(String coinGeckoId, String symbol) {
     }
 }

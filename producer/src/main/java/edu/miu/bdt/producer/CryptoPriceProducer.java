@@ -20,7 +20,6 @@ public class CryptoPriceProducer {
     private static final String DEFAULT_TOPIC = "crypto-topic";
     private static final long DEFAULT_INTERVAL_MS = 10_000L; // Default to 10s
     private static final long DEFAULT_MAX_EVENTS = 0L;
-
     private final KafkaProducer<String, String> producer;
     private final CryptoApiClient apiClient;
     private final ObjectMapper objectMapper;
@@ -62,7 +61,6 @@ public class CryptoPriceProducer {
                 settings.intervalMs(),
                 settings.maxEvents()
         );
-
         Runtime.getRuntime().addShutdownHook(new Thread(app::stop));
         app.run();
     }
@@ -166,7 +164,6 @@ public class CryptoPriceProducer {
         properties.put(ProducerConfig.CLIENT_ID_CONFIG, "crypto-price-producer");
         return properties;
     }
-
     private record ProducerSettings(String bootstrapServers,
                                     String topic,
                                     long intervalMs,
