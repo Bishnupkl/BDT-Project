@@ -10,6 +10,7 @@ out/
 .m2/
 target/
 **/target/
+data/
 
 ### Local Docker Compose overrides ###
 docker-compose.override.yml
