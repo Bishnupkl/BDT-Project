@@ -68,11 +68,11 @@ public class StreamingProcessor {
                 );
     }
 
-    public Dataset<Row> aggregateOneMinutePrices(Dataset<Row> prices) {
+    public Dataset<Row> aggregateTwoSecondPrices(Dataset<Row> prices) {
         return prices
-                .withWatermark("timestamp", "2 minutes")
+                .withWatermark("timestamp", "2 seconds")
                 .groupBy(
-                        window(col("timestamp"), "1 minute"),
+                        window(col("timestamp"), "2 seconds"),
                         col("symbol"),
                         col("coin_name"),
                         col("category")

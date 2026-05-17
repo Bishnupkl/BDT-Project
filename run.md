@@ -81,7 +81,7 @@ You should see JSON messages with current market prices like:
 ```
 
 ### 6. Run Spark Streaming Analytics
-The Spark app connects to Kafka from inside Docker using `kafka:29092`, subscribes to `crypto-topic`, parses each JSON message, joins static crypto metadata, and computes 1-minute streaming analytics:
+The Spark app connects to Kafka from inside Docker using `kafka:29092`, subscribes to `crypto-topic`, parses each JSON message, joins static crypto metadata, and computes 2-second streaming analytics:
 
 - average price
 - maximum price
@@ -127,14 +127,14 @@ Each row contains:
 | timestamp | Parsed event timestamp |
 
 ### 8. View Streaming Analytics in Console
-The Spark job computes 1-minute analytics and prints them to the console while the raw enriched stream is written to `data/crypto_analytics.db`.
+The Spark job computes 2-second analytics and prints them to the console while the raw enriched stream is written to `data/crypto_analytics.db`.
 
 Console analytics include:
 
 | Column | Description |
 |---|---|
-| window_start | Start of the 1-minute window |
-| window_end | End of the 1-minute window |
+| window_start | Start of the 2-second window |
+| window_end | End of the 2-second window |
 | symbol | Crypto ticker |
 | coin_name | Name from static metadata |
 | category | Category from static metadata |
@@ -154,6 +154,15 @@ The Hive table points to the same folder where Spark writes the `.parquet` files
 
 Stop continuous streaming with: `Ctrl + C`
 
+### 9a. Check Hive Database Contents
+After Spark has written Parquet files, run the PySpark inspection job:
+
+```bash
+bash scripts/check-hive-crypto-analytics.sh
+```
+
+The job checks `crypto_analytics.crypto_info`, prints the registered tables, schema, row count, timestamp range, rows by symbol, recent sample rows, and the number of Parquet files backing the table.
+
 ### 10. Join Streaming Data with Static CSV Metadata
 Static metadata lives in:
 
@@ -171,13 +180,20 @@ Example:
 Spark joins the streaming Kafka data with this CSV by `symbol` before writing `data/crypto_analytics.db`.
 
 ### 11. Run Dashboard
-After Spark has written Parquet files, start the dashboard from the project root:
+Start the dashboard from the project root:
 ```bash
 pip install -r dashboard/requirements.txt
 streamlit run dashboard/streamlit_app.py
 ```
 
-The dashboard reads:
+By default, the dashboard reads all available messages from the Kafka topic and refreshes automatically so the live prices, 2-second aggregations, and average price trend update as producer messages arrive:
+
+```text
+crypto-topic
+```
+
+You can also switch the dashboard sidebar to read the Spark-written Parquet files:
+
 ```text
 data/crypto_analytics.db
 ```
