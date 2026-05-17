@@ -16,9 +16,6 @@ data/
 docker-compose.override.yml
 .env
 
-### Local Documentation ###
-KAFKA_DOCKER_SETUP_GUIDE.md
-
 ### Legacy root source scaffold ###
 /src/
 
