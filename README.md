@@ -424,14 +424,14 @@ Potential enhancements:
 
 # Contributors
 
-### Student 1
+### Student 1: Bishnu
 - Docker infrastructure
 - Kafka setup
 - Java Kafka producer
 - CoinGecko API integration
 - Networking and integration testing
 
-### Student 2
+### Student 2: Mayssa
 - Spark Structured Streaming
 - Hive/Parquet storage
 - Metadata enrichment
