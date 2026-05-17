@@ -125,3 +125,14 @@ The `scripts/` directory contains helpers for managing the project:
 - `check-hive-crypto-analytics.sh`: Inspects the Hive-compatible crypto analytics table.
 - `check-spark-kafka.sh`: Verifies network connectivity between Spark and Kafka.
 - `integration-test-bishnu.sh`: Runs an automated end-to-end test.
+
+## Future Improvements
+
+Potential future enhancements for the pipeline:
+- Add Binance WebSocket integration
+- Add Spark Structured Streaming analytics
+- Store processed data in Parquet/Hive
+- Build Grafana or Streamlit dashboard
+- Add anomaly detection alerts
+- Add historical replay support
+- Deploy using Kubernetes
