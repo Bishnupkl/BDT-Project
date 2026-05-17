@@ -98,34 +98,6 @@ streamlit run dashboard/streamlit_app.py
 
 Open the dashboard URL printed by Streamlit, usually http://localhost:8501.
 
-### Recommended Demo Order
-
-1. Start cluster:
-   ```bash
-   bash scripts/start-cluster.sh
-   ```
-
-2. Start producer:
-   ```bash
-   bash scripts/run-producer.sh
-   ```
-
-3. Start Spark streaming:
-   ```bash
-   rm -rf data/checkpoints
-   bash scripts/run-spark-app.sh
-   ```
-
-4. Start dashboard:
-   ```bash
-   streamlit run dashboard/streamlit_app.py
-   ```
-
-5. Stop everything when done:
-   ```bash
-   bash scripts/stop-cluster.sh
-   ```
-
 ## Kafka Connectivity
 
 - **Inside Docker containers:** Use `kafka:29092`. (Docker containers communicate internally using the Docker network hostname).
