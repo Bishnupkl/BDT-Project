@@ -98,7 +98,7 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:29092}
       KAFKA_TOPIC: ${KAFKA_TOPIC:-crypto-topic}
-      PRODUCER_INTERVAL_MS: ${PRODUCER_INTERVAL_MS:-1000}
+      PRODUCER_INTERVAL_MS: ${PRODUCER_INTERVAL_MS:-10000}
       PRODUCER_MAX_EVENTS: ${PRODUCER_MAX_EVENTS:-0}
     networks:
       - crypto-network

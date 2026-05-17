@@ -18,7 +18,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class CryptoPriceProducer {
     private static final String DEFAULT_BOOTSTRAP_SERVERS = "localhost:9092";
     private static final String DEFAULT_TOPIC = "crypto-topic";
-    private static final long DEFAULT_INTERVAL_MS = 10_000L; // Default to 10s
+    private static final long DEFAULT_INTERVAL_MS = 10_000L;
+    private static final long MIN_INTERVAL_MS = 10_000L;
+    private static final long RATE_LIMIT_COOLDOWN_MS = 60_000L;
+    private static final long RATE_LIMIT_RECORD_BATCH_SIZE = 15L;
     private static final long DEFAULT_MAX_EVENTS = 0L;
     private final KafkaProducer<String, String> producer;
     private final CryptoApiClient apiClient;
@@ -71,10 +74,9 @@ public class CryptoPriceProducer {
             while (running.get() && (maxEvents <= 0 || sentEvents < maxEvents)) {
                 List<CryptoPriceEvent> events = fetchEvents();
 
-                // If API rate limited or failed, sleep and retry
                 if (events.isEmpty() && running.get()) {
                     System.out.println("No events fetched (possible rate limit). Sleeping for 60 seconds before retry...");
-                    sleepFor(60_000L); // Force a long sleep on failure
+                    sleepFor(RATE_LIMIT_COOLDOWN_MS);
                     continue;
                 }
 
@@ -91,12 +93,14 @@ public class CryptoPriceProducer {
                     break;
                 }
 
-                // Custom logic: after every 15 records (3 API calls), sleep for 60 seconds
-                if (sentEvents > 0 && sentEvents % 15 == 0) {
-                    System.out.printf("Sent %d records. Sleeping for 60 seconds to respect API rate limits...%n", sentEvents);
-                    sleepFor(60_000L);
+                if (sentEvents > 0 && sentEvents % RATE_LIMIT_RECORD_BATCH_SIZE == 0) {
+                    System.out.printf(
+                            "Sent %d records. Sleeping for 60 seconds to respect API rate limits...%n",
+                            sentEvents
+                    );
+                    sleepFor(RATE_LIMIT_COOLDOWN_MS);
                 } else {
-                    sleepBetweenEvents(); // Sleep the standard interval (e.g. 10s)
+                    sleepBetweenEvents();
                 }
             }
         } finally {
@@ -146,7 +150,9 @@ public class CryptoPriceProducer {
     }
 
     private void sleepFor(long ms) {
-        if (ms <= 0) return;
+        if (ms <= 0) {
+            return;
+        }
         try {
             Thread.sleep(ms);
         } catch (InterruptedException e) {
@@ -170,13 +176,15 @@ public class CryptoPriceProducer {
                                     long maxEvents,
                                     URI cryptoApiUri) {
         private static ProducerSettings fromEnvironment() {
-            // Force a minimum of 10 seconds for the short sleep
             long requestedInterval = longEnv("PRODUCER_INTERVAL_MS", DEFAULT_INTERVAL_MS);
-            long safeInterval = Math.max(requestedInterval, 10_000L);
+            long safeInterval = Math.max(requestedInterval, MIN_INTERVAL_MS);
 
-            if (requestedInterval < 10_000L) {
-                System.out.printf("WARNING: Requested interval of %d ms is too aggressive. Overriding to %d ms.%n",
-                        requestedInterval, safeInterval);
+            if (requestedInterval < MIN_INTERVAL_MS) {
+                System.out.printf(
+                        "WARNING: Requested interval of %d ms is too aggressive. Overriding to %d ms.%n",
+                        requestedInterval,
+                        safeInterval
+                );
             }
 
             return new ProducerSettings(

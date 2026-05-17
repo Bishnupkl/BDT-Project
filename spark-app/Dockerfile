@@ -9,6 +9,7 @@ FROM spark:3.5.8
 WORKDIR /opt/spark-app
 COPY --from=build /app/target/crypto-spark-app-1.0.0.jar /opt/spark-app/crypto-spark-app.jar
 COPY metadata /opt/spark-app/metadata
+COPY jobs /opt/spark-app/jobs
 
 ENV SPARK_MASTER_URL=spark://spark-master:7077
 ENV KAFKA_BOOTSTRAP_SERVERS=kafka:29092

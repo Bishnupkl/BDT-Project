@@ -46,7 +46,7 @@ public class SparkStreamingApp {
         processor.registerHiveTables(outputPath);
         Dataset<Row> parsedPrices = processor.parseCryptoMessages(processor.readKafkaJsonStream());
         Dataset<Row> enrichedPrices = processor.enrichWithMetadata(parsedPrices, metadataPath);
-        Dataset<Row> analytics = processor.aggregateOneMinutePrices(enrichedPrices);
+        Dataset<Row> analytics = processor.aggregateTwoSecondPrices(enrichedPrices);
         VoidFunction2<Dataset<Row>, Long> writeCryptoInfoBatch = (batch, batchId) -> {
             Dataset<Row> persistedBatch = batch.persist();
             if (!persistedBatch.isEmpty()) {
