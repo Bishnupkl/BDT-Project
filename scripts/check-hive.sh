@@ -74,6 +74,19 @@ def checked_identifier(value, label):
     return value
 
 
+def clear_table_location(spark, table_path):
+    hadoop_conf = spark.sparkContext._jsc.hadoopConfiguration()
+    path = spark.sparkContext._jvm.org.apache.hadoop.fs.Path(table_path)
+    fs = path.getFileSystem(hadoop_conf)
+
+    if not fs.exists(path):
+        fs.mkdirs(path)
+        return
+
+    for status in fs.listStatus(path):
+        fs.delete(status.getPath(), True)
+
+
 database = checked_identifier(os.environ.get("CHECK_HIVE_DATABASE", "crypto_analytics"), "database")
 table = checked_identifier(os.environ.get("CHECK_HIVE_TABLE", "crypto_info"), "table")
 warehouse_dir = os.environ.get("SPARK_WAREHOUSE_DIR", "/opt/spark-app/storage")
@@ -113,6 +126,11 @@ try:
     print(f"\n== SHOW TABLES IN {database} ==")
     spark.sql(f"SHOW TABLES IN {database}").show(truncate=False)
 
+    print(f"\n== CLEAR TABLE LOCATION FOR {full_table_name} ==")
+    clear_table_location(spark, table_path)
+    spark.catalog.refreshTable(full_table_name)
+    print(f"Deleted files under {table_path}")
+
     print(f"\n== SELECT COUNT(*) FROM {full_table_name} ==")
     spark.sql(f"SELECT COUNT(*) AS record_count FROM {full_table_name}").show(truncate=False)
 
@@ -121,4 +139,3 @@ try:
 finally:
     spark.stop()
 PYSPARK
-
