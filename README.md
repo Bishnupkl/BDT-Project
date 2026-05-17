@@ -57,6 +57,20 @@ Interactive **Streamlit dashboard** with:
 
 ---
 
+# Bonus Points Implemented
+
+This project includes bonus functionality beyond the core Kafka and Spark streaming pipeline:
+
+- **Metadata enrichment:** Spark joins each live crypto price event with static metadata from `spark-app/metadata/crypto_metadata.csv`.
+- **Coin details added to streaming records:** Enriched records include `coin_name` and `category` in addition to `symbol`, `price`, and `timestamp`.
+- **Hive/Parquet analytical storage:** Streaming records are stored as Parquet and registered as the Hive-compatible table `crypto_analytics.crypto_info`.
+- **Live dashboard visualization:** Streamlit displays live prices, 1-minute aggregations, average price trends, and multi-coin analytics.
+- **Demo verification helper:** `scripts/check-hive.sh` verifies the required workflow: empty Hive table before streaming, then populated Hive table after Spark and the producer run.
+
+These bonus features demonstrate enrichment, persistent analytical storage, visualization, and a cleaner professor demo workflow.
+
+---
+
 # Architecture
 
 ```text
